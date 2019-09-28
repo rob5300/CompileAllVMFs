@@ -15,7 +15,7 @@ import subprocess
 # The location of the bin directory in your HL2 installation. Should be in your steamapps/common folder.
 hl2bindir = "D:\\SteamLibrary\\steamapps\\common\\Half-Life 2\\bin"
 
-# Where vbsp should place your maps after compiling. This should be the top directory of the mod, the Half-Life 2, or ep2 folder for example.
+# Game data to use and where vbsp should place your maps after compiling. This should be the top directory of the mod, the Half-Life 2, or ep2 folder for example.
 targetmapdir = "D:\\SteamLibrary\\steamapps\\common\\Half-Life 2\\ep2"
 
 # Should we copy the map to another directory too? (set to True or False)
@@ -48,7 +48,7 @@ def CompileAll():
             mapsremaining += 1
             thread.start()
             threads.append(thread)
-
+            
     for t in threads:
         if(t.is_alive()): t.join()
 
@@ -78,10 +78,13 @@ def CompileVMF(vmf):
     mapsremaining -= 1
     print(f"##### Compile finished on {vmf}, {mapsremaining} still processing... #####")
 
+    # Copy the finished file to the target games map dir.
+    name = os.path.splitext(vmf)[0]
+    shutil.copyfile(GetBSP(vmf), f"{targetmapdir}\\maps\\{name}.bsp")
+
     #endmessages.append(f"{vmf} was sent to vbsp, vvis and vrad")
 
-    if(copyToAdditionalFolder): 
-        name = os.path.splitext(vmf)[0]
+    if(copyToAdditionalFolder):
         shutil.copyfile(GetBSP(vmf), f"{additionalmapDir}\\{name}.bsp")
         endmessages.append(f"Map {name} was copied to additional map dir at: {additionalmapDir}")
 
@@ -95,9 +98,12 @@ def executeonfile(cmd, file):
             maperrors.append(f"Error from {file}: {line}")
     
 
+#Get the new bsp path.
 def GetBSP(file):
     name = os.path.splitext(file)[0]
-    return f"{targetmapdir}\\maps\\{name}.bsp"
+    return f"{ourpath}\\{name}.bsp"
+
+
 
 CompileAll()
 input()
