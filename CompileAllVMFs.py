@@ -5,11 +5,6 @@ Description: Takes all the .vmf files in the same directory of this py file and 
 			 The finished map can also be copied to an additional directory.
              Python 3 only
 '''
-import os
-import shutil
-import threading
-import subprocess
-
 # ----------------------------- Settings -----------------------------------
 
 # The location of the bin directory in your HL2 installation. Should be in your steamapps/common folder.
@@ -24,10 +19,20 @@ copyToAdditionalFolder = True
 # If the above is True, the Additional dir to also copy the compiled map to. This copies the finished map with vis and rad applied.
 additionalmapDir = "D:\\SteamLibrary\\steamapps\\sourcemods\\MyMod\\maps"
 
-##--------------------------------------------------------------------------
+##------------------------- Command Presets---------------------------------
+# You can add in extra options in the arrays below to add more arguments for hdr support for example.
+# Example of extra launch args here: https://developer.valvesoftware.com/wiki/VRAD
+
 commandvbps = [f"{hl2bindir}\\vbsp.exe",  "-game",  targetmapdir]
 commandvrad = [f"{hl2bindir}\\vrad.exe", "-both", "-StaticPropLighting"]
 commandvvis = [f"{hl2bindir}\\vvis.exe"]
+##--------------------------------------------------------------------------
+# Only edit below here if you know what you are doing!
+
+import os
+import shutil
+import threading
+import subprocess
 
 endmessages = []
 maperrors = []
@@ -38,6 +43,12 @@ ourpath = os.path.dirname(__file__)
 
 def CompileAll():
     print("--== Batch .vmf compiler by github.com/rob5300 ==--")
+
+    # Initial check if the bin dir is correct and exists
+    if(not CheckConfigIsValid()):
+        print("No changes were made.")
+        return
+
     print(".vmf files will be located and compiled. Please wait for a message saying that all have finished before closing the window/program.\n")
     files = os.listdir(ourpath)
     global mapsremaining #Python is stupid soo we need this?
@@ -82,8 +93,6 @@ def CompileVMF(vmf):
     name = os.path.splitext(vmf)[0]
     shutil.copyfile(GetBSP(vmf), f"{targetmapdir}\\maps\\{name}.bsp")
 
-    #endmessages.append(f"{vmf} was sent to vbsp, vvis and vrad")
-
     if(copyToAdditionalFolder):
         shutil.copyfile(GetBSP(vmf), f"{additionalmapDir}\\{name}.bsp")
         endmessages.append(f"Map {name} was copied to additional map dir at: {additionalmapDir}")
@@ -93,17 +102,39 @@ def executeonfile(cmd, file):
     newcommand.append(file)
     result = subprocess.run(newcommand, stdout=subprocess.PIPE).stdout.decode('utf-8')
     splitresult = result.split("\n")
+    linenum = 0
     for line in splitresult:
         if("leaked!" in line or "Error" in line or "WARNING" in line or "bad" in line):
             maperrors.append(f"Error from {file}: {line}")
-    
-
+        if("To use model" in line):
+            # Special case for model usage error to capture this and the next line.
+            maperrors.append(f"Error from {file}: {line},\n{splitresult[linenum + 1]}")
+        linenum += 1
+        
 #Get the new bsp path.
 def GetBSP(file):
     name = os.path.splitext(file)[0]
     return f"{ourpath}\\{name}.bsp"
 
+def CheckConfigIsValid():
+    passed = True
+    if(not os.path.exists(hl2bindir)):
+        print("The hl2bindir value was incorrect, please check it and edit it to be your Half-Life 2/bin folder (or where you have vbsp, vrad and vvis stored).")
+        print("You can edit the value by opening this python script in any text/code editor such as notepad or vscode.")
+        print("Program will now terminate, no files changed or modified.")
+        return False
 
+    if (not os.path.isfile(f"{hl2bindir}\\vbsp.exe")):
+        print("vbsp.exe was not found in your supplied bin directory. Please check it is correct.")
+        passed = False
+    if (not os.path.isfile(f"{hl2bindir}\\vrad.exe")):
+        print("vrad.exe was not found in your supplied bin directory. Please check it is correct.")
+        passed = False
+    if (not os.path.isfile(f"{hl2bindir}\\vvis.exe")):
+        print("vvis.exe was not found in your supplied bin directory. Please check it is correct.")
+        passed = False
+
+    return passed
 
 CompileAll()
 input()
