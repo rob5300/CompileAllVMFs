@@ -23,7 +23,7 @@ additionalmapDir = "D:\\SteamLibrary\\steamapps\\sourcemods\\MyMod\\maps"
 # You can add in extra options in the arrays below to add more arguments for hdr support for example.
 # Example of extra launch args here: https://developer.valvesoftware.com/wiki/VRAD
 
-commandvbps = [f"{hl2bindir}\\vbsp.exe",  "-game",  targetmapdir]
+commandvbsp = [f"{hl2bindir}\\vbsp.exe",  "-game",  targetmapdir]
 commandvrad = [f"{hl2bindir}\\vrad.exe", "-both", "-StaticPropLighting"]
 commandvvis = [f"{hl2bindir}\\vvis.exe"]
 ##--------------------------------------------------------------------------
@@ -78,8 +78,8 @@ def CompileAll():
 def CompileVMF(vmf):
     print("##### Compiling " + vmf + " #####")
     # Compile the map
-    print(f"## Running vbps on {vmf}")
-    executeonfile(commandvbps, ourpath + "\\" + vmf)
+    print(f"## Running vbsp on {vmf}")
+    executeonfile(commandvbsp, ourpath + "\\" + vmf)
     # Send new bsp to vrad and vvis.
     print(f"## Running vrad on {vmf}")
     executeonfile(commandvrad, GetBSP(vmf))
